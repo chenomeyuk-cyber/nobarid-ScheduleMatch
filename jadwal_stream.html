@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streamer Dashboard Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .glass-card { background: #fff; border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .tutorial-card { background: #e7f1ff; border-left: 5px solid #0d6efd; border-radius: 10px; }
+        
+        /* Warna Baris */
+        .row-with-host td { background-color: #d4edda !important; color: #155724 !important; } 
+        .row-no-host td { background-color: #fff3cd !important; color: #856404 !important; }   
+        
+        .table thead { background: #212529; color: #fff; }
+        .loading-spy { display: none; margin-left: 10px; font-size: 0.8em; }
+        
+        /* Styling Tags */
+        .btn-tag { border-radius: 20px; font-size: 0.85rem; margin-right: 5px; margin-bottom: 5px; transition: all 0.2s; }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid px-4 mt-4">
+    <header class="mb-4">
+        <h2 class="fw-bold text-dark">Streamer Command Center</h2>
+    </header>
+
+    <div class="card glass-card p-4 mb-3">
+        <h5 class="fw-bold mb-3"><i class="fas fa-filter me-2"></i>Smart Filter</h5>
+        <div class="row g-3">
+            <div class="col-md-3"><input type="text" id="filter-search" class="form-control" placeholder="Cari tim atau liga..."></div>
+            <div class="col-md-2"><input type="date" id="filter-start-date" class="form-control"></div>
+            <div class="col-md-2"><input type="date" id="filter-end-date" class="form-control"></div>
+            <div class="col-md-1"><input type="time" id="filter-start-time" class="form-control"></div>
+            <div class="col-md-1"><input type="time" id="filter-end-time" class="form-control"></div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-primary btn-tag" onclick="toggleTag('with-host', this)">🟢 Live dengan Host</button>
+                <button class="btn btn-outline-warning btn-tag" onclick="toggleTag('no-host', this)">🟡 Live tanpa Host</button>
+                <button class="btn btn-outline-info btn-tag" onclick="toggleTag('has-streamer', this)">👤 Sudah Ada Nama</button>
+                <button class="btn btn-outline-secondary btn-tag" onclick="toggleTag('unassigned', this)">⚪ Belum Diatur</button>
+            </div>
+            <div class="col-md-12 text-end"><button class="btn btn-secondary px-4" onclick="resetFilters()">Reset Semua</button></div>
+        </div>
+    </div>
+
+    <div class="card tutorial-card p-3 mb-4">
+        <h6 class="fw-bold text-primary"><i class="fas fa-tags me-2"></i>Sistem Tag & Multi-Filter:</h6>
+        <ul class="small mb-0">
+            <li><strong>Multi-Filter:</strong> Klik tombol status di atas untuk mengaktifkan tag. Kamu bisa mengaktifkan lebih dari satu tag sekaligus.</li>
+            <li><strong>Contoh:</strong> Jika kamu klik "Live dengan Host" <strong>DAN</strong> "Sudah Ada Nama", tabel hanya menampilkan data yang memenuhi <strong>salah satu</strong> kondisi tersebut.</li>
+            <li><strong>Reset:</strong> Klik tombol Reset untuk menghapus semua filter.</li>
+        </ul>
+    </div>
+    <div class="card tutorial-card p-3 mb-4">
+        <h6 class="fw-bold text-primary"><i class="fas fa-book me-2"></i>Panduan Pengisian Jadwal:</h6>
+        <div class="row small mb-0">
+            <div class="col-md-6">
+                <p class="mb-1"><strong>1. Live dengan Host (Hijau):</strong><br> Centang ini jika pertandingan akan <strong>dibawakan oleh Host</strong>. Di kolom input, wajib isi dengan <strong>Nama Streamer</strong> yang bertugas.</p>
+            </div>
+            <div class="col-md-6">
+                <p class="mb-1"><strong>2. Live tanpa Host (Kuning):</strong><br> Centang ini jika pertandingan bersifat <em>live config/setup</em> saja. Di kolom input, isi dengan <strong>Nama Orang yang melakukan Setup/Config</strong>.</p>
+            </div>
+        </div>
+        <hr class="my-2">
+        <p class="small mb-0 text-muted"><em>Catatan: Data tersimpan otomatis ke Google Sheets saat kamu klik di luar kotak input. Hanya boleh centang salah satu tipe live per pertandingan.</em></p>
+    </div>
+        <div class="card tutorial-card p-3 mb-4">
+        <h6 class="fw-bold text-primary"><i class="fas fa-tags me-2"></i>Panduan Host/Setup:</h6>
+        <ul class="small mb-0">
+            <li><strong>Notes:</strong> Jika match tersebut Source API Stream nya tidak tersedia,maka harap hubungi admin terkecuali yang live tanpa host , maka tidak perlu disiarkan</li>
+
+        </ul>
+    </div>
+
+    <div class="card glass-card p-4">
+        <div class="d-flex justify-content-between mb-3">
+            <span class="fw-bold" id="total-match-info">Memuat data...</span>
+            <span class="text-secondary loading-spy" id="global-loader"><i class="fas fa-spinner fa-spin"></i> Menyimpan...</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Jadwal (WIB)</th><th>Liga</th><th>Match</th><th>Live Host</th><th>Nama Streamer/Setup</th><th>Tanpa Host</th>
+                    </tr>
+                </thead>
+                <tbody id="table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const sheetAPI = "https://script.google.com/macros/s/AKfycbzPcvcb1KfyQOsJV2zmaS9Z4M8cRJk_mgq6dADyreOOSl_rm_XgHQFv1tmLvgMfcG5T/exec";
+    let localData = [];
+    let activeTags = []; // Array untuk menampung tag yang aktif
+
+    async function loadMasterData() {
+        try {
+            const res = await fetch(sheetAPI);
+            localData = await res.json();
+            applyFilters();
+        } catch (e) {
+            document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Gagal load data.</td></tr>`;
+        }
+    }
+
+    // Fungsi Toggle Tag
+    function toggleTag(tagName, btnElement) {
+        if (activeTags.includes(tagName)) {
+            activeTags = activeTags.filter(t => t !== tagName);
+            btnElement.classList.remove('active');
+        } else {
+            activeTags.push(tagName);
+            btnElement.classList.add('active');
+        }
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const s = document.getElementById('filter-search').value.toLowerCase();
+        const startD = document.getElementById('filter-start-date').value;
+        const endD = document.getElementById('filter-end-date').value;
+        const startT = document.getElementById('filter-start-time').value;
+        const endT = document.getElementById('filter-end-time').value;
+
+        let filtered = localData;
+
+        // Teks & Waktu
+        if (s) filtered = filtered.filter(i => i.match.toLowerCase().includes(s) || i.liga.toLowerCase().includes(s));
+        if (startD || endD) filtered = filtered.filter(i => { const d = i.waktu.split(' ')[0]; return (!startD || d >= startD) && (!endD || d <= endD); });
+        if (startT || endT) filtered = filtered.filter(i => { const t = i.waktu.split(' ')[1]; return (!startT || t >= startT) && (!endT || t <= endT); });
+        
+        // Multi-Tag Logic (OR Logic: match any active tag)
+        if (activeTags.length > 0) {
+            filtered = filtered.filter(i => {
+                return activeTags.some(tag => {
+                    if (tag === 'with-host') return i.host;
+                    if (tag === 'no-host') return i.tanpaHost;
+                    if (tag === 'has-streamer') return i.streamer.trim() !== "";
+                    if (tag === 'unassigned') return !i.host && !i.tanpaHost;
+                    return false;
+                });
+            });
+        }
+
+        document.getElementById('total-match-info').innerText = `Menampilkan ${filtered.length} dari ${localData.length} pertandingan`;
+        renderTable(filtered);
+    }
+
+    function renderTable(data) {
+        const tbody = document.getElementById('table-body');
+        tbody.innerHTML = data.map(m => {
+            let rowClass = m.host ? 'row-with-host' : (m.tanpaHost ? 'row-no-host' : '');
+            let input = (m.host || m.tanpaHost) 
+                ? `<input type="text" class="form-control form-control-sm" value="${m.streamer}" onchange="updateDatabase(${m.rowId}, 'streamer', this.value)">`
+                : `<span class="text-muted small">❌ Pilih tipe live</span>`;
+            
+            return `
+                <tr id="row-${m.rowId}" class="${rowClass}">
+                    <td><strong>${m.waktu}</strong></td>
+                    <td><span class="badge bg-secondary">${m.liga}</span></td>
+                    <td class="fw-bold">${m.match}</td>
+                    <td class="text-center"><input type="checkbox" ${m.host ? 'checked' : ''} onchange="toggleType(${m.rowId}, 'host', this.checked)"></td>
+                    <td>${input}</td>
+                    <td class="text-center"><input type="checkbox" ${m.tanpaHost ? 'checked' : ''} onchange="toggleType(${m.rowId}, 'tanpaHost', this.checked)"></td>
+                </tr>`;
+        }).join('');
+    }
+
+    async function toggleType(rowId, field, val) {
+        const idx = localData.findIndex(i => i.rowId === rowId);
+        if (val) {
+            localData[idx].host = (field === 'host');
+            localData[idx].tanpaHost = (field === 'tanpaHost');
+            await updateDatabase(rowId, field === 'host' ? 'tanpaHost' : 'host', false);
+        } else {
+            localData[idx][field] = false;
+            localData[idx].streamer = "";
+            await updateDatabase(rowId, 'streamer', "");
+        }
+        await updateDatabase(rowId, field, val);
+        applyFilters();
+    }
+
+    async function updateDatabase(rowId, field, val) {
+        document.getElementById('global-loader').style.display = 'inline';
+        const idx = localData.findIndex(i => i.rowId === rowId);
+        localData[idx][field] = val;
+        try {
+            await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({rowId, field, value: val}) });
+        } finally {
+            document.getElementById('global-loader').style.display = 'none';
+        }
+    }
+
+    function resetFilters() {
+        document.querySelectorAll('input').forEach(i => i.value = '');
+        activeTags = [];
+        document.querySelectorAll('.btn-tag').forEach(b => b.classList.remove('active'));
+        applyFilters();
+    }
+
+    document.getElementById('filter-search').addEventListener('input', applyFilters);
+    document.getElementById('filter-start-date').addEventListener('change', applyFilters);
+    document.getElementById('filter-end-date').addEventListener('change', applyFilters);
+    document.getElementById('filter-start-time').addEventListener('input', applyFilters);
+    document.getElementById('filter-end-time').addEventListener('input', applyFilters);
+    loadMasterData();
+</script>
+</body>
+</html>
