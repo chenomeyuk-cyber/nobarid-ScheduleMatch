@@ -7,209 +7,612 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .glass-card { background: #fff; border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .tutorial-card { background: #e7f1ff; border-left: 5px solid #0d6efd; border-radius: 10px; }
+        body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
+        .sidebar { height: 100vh; position: fixed; width: 250px; background: #1e1e2d; color: #a2a3b7; padding-top: 20px; transition: 0.3s; z-index: 1000; }
+        .sidebar .brand { color: #fff; font-size: 1.2rem; font-weight: bold; text-align: center; margin-bottom: 30px; padding: 0 15px; }
+        .sidebar a { color: #a2a3b7; text-decoration: none; display: block; padding: 12px 20px; margin: 0 15px 5px 15px; border-radius: 8px; transition: 0.2s; font-weight: 500; cursor: pointer; }
+        .sidebar a:hover, .sidebar a.active { background: #4d90fe; color: white; }
+        .main-content { margin-left: 250px; padding: 20px; transition: 0.3s; }
+        @media (max-width: 768px) { .sidebar { width: 100%; height: auto; position: relative; padding-bottom: 15px; } .main-content { margin-left: 0; } }
         
-        /* Warna Baris */
-        .row-with-host td { background-color: #d4edda !important; color: #155724 !important; } 
-        .row-no-host td { background-color: #fff3cd !important; color: #856404 !important; }   
+        .glass-card { background: #fff; border-radius: 15px; border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .stat-card { background: #fff; border-radius: 15px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border-bottom: 4px solid #4d90fe; }
+        .stat-card h3 { font-weight: bold; margin-bottom: 0; color: #1e1e2d; }
         
         .table thead { background: #212529; color: #fff; }
         .loading-spy { display: none; margin-left: 10px; font-size: 0.8em; }
+        .nav-tabs .nav-link { font-weight: bold; color: #495057; border-radius: 10px 10px 0 0; }
+        .nav-tabs .nav-link.active { background-color: #fff; color: #0d6efd !important; border-bottom-color: transparent; }
         
-        /* Styling Tags */
-        .btn-tag { border-radius: 20px; font-size: 0.85rem; margin-right: 5px; margin-bottom: 5px; transition: all 0.2s; }
+        .guide-box { background-color: #e7f1ff; border-left: 4px solid #0d6efd; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; }
+        #page-info, #page-streamer, #page-history { display: none; }
     </style>
 </head>
 <body>
 
-<div class="container-fluid px-4 mt-4">
-    <header class="mb-4">
-        <h2 class="fw-bold text-dark">Streamer Command Center</h2>
-    </header>
+<div class="sidebar">
+    <div class="brand"><i class="fas fa-satellite-dish me-2"></i>SCC Panel</div>
+    <a class="nav-btn active" onclick="switchPage('page-schedule', this)"><i class="fas fa-calendar-alt me-2"></i> Schedule Center</a>
+    <a class="nav-btn" onclick="switchPage('page-history', this)"><i class="fas fa-history me-2"></i> History Match</a>
+    <a class="nav-btn" onclick="switchPage('page-streamer', this)"><i class="fas fa-user-friends me-2"></i> List Streamer</a>
+    <a class="nav-btn" onclick="switchPage('page-info', this)"><i class="fas fa-chart-pie me-2"></i> Detailed Info</a>
+</div>
 
-    <div class="card glass-card p-4 mb-3">
-        <h5 class="fw-bold mb-3"><i class="fas fa-filter me-2"></i>Smart Filter</h5>
-        <div class="row g-3">
-            <div class="col-md-3"><input type="text" id="filter-search" class="form-control" placeholder="Cari tim atau liga..."></div>
-            <div class="col-md-2"><input type="date" id="filter-start-date" class="form-control"></div>
-            <div class="col-md-2"><input type="date" id="filter-end-date" class="form-control"></div>
-            <div class="col-md-1"><input type="time" id="filter-start-time" class="form-control"></div>
-            <div class="col-md-1"><input type="time" id="filter-end-time" class="form-control"></div>
-            <div class="col-md-3">
-                <button class="btn btn-outline-primary btn-tag" onclick="toggleTag('with-host', this)">🟢 Live dengan Host</button>
-                <button class="btn btn-outline-warning btn-tag" onclick="toggleTag('no-host', this)">🟡 Live tanpa Host</button>
-                <button class="btn btn-outline-info btn-tag" onclick="toggleTag('has-streamer', this)">👤 Sudah Ada Nama</button>
-                <button class="btn btn-outline-secondary btn-tag" onclick="toggleTag('unassigned', this)">⚪ Belum Diatur</button>
-            </div>
-            <div class="col-md-12 text-end"><button class="btn btn-secondary px-4" onclick="resetFilters()">Reset Semua</button></div>
-        </div>
-    </div>
+<div class="main-content">
+    
+    <div id="page-schedule">
+        <header class="mb-4">
+            <h2 class="fw-bold text-dark">Live Schedule Center</h2>
+            <p class="text-muted">Hanya menampilkan pertandingan <strong>Upcoming</strong> (belum lewat jam tayang).</p>
+        </header>
 
-    <div class="card tutorial-card p-3 mb-4">
-        <h6 class="fw-bold text-primary"><i class="fas fa-tags me-2"></i>Sistem Tag & Multi-Filter:</h6>
-        <ul class="small mb-0">
-            <li><strong>Multi-Filter:</strong> Klik tombol status di atas untuk mengaktifkan tag. Kamu bisa mengaktifkan lebih dari satu tag sekaligus.</li>
-            <li><strong>Contoh:</strong> Jika kamu klik "Live dengan Host" <strong>DAN</strong> "Sudah Ada Nama", tabel hanya menampilkan data yang memenuhi <strong>salah satu</strong> kondisi tersebut.</li>
-            <li><strong>Reset:</strong> Klik tombol Reset untuk menghapus semua filter.</li>
-        </ul>
-    </div>
-    <div class="card tutorial-card p-3 mb-4">
-        <h6 class="fw-bold text-primary"><i class="fas fa-book me-2"></i>Panduan Pengisian Jadwal:</h6>
-        <div class="row small mb-0">
-            <div class="col-md-6">
-                <p class="mb-1"><strong>1. Live dengan Host (Hijau):</strong><br> Centang ini jika pertandingan akan <strong>dibawakan oleh Host</strong>. Di kolom input, wajib isi dengan <strong>Nama Streamer</strong> yang bertugas.</p>
-            </div>
-            <div class="col-md-6">
-                <p class="mb-1"><strong>2. Live tanpa Host (Kuning):</strong><br> Centang ini jika pertandingan bersifat <em>live config/setup</em> saja. Di kolom input, isi dengan <strong>Nama Orang yang melakukan Setup/Config</strong>.</p>
+        <div class="card glass-card p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="fas fa-filter me-2"></i>Global Search & Filter</h5>
+            <div class="row g-3">
+                <div class="col-md-3"><input type="text" id="filter-search" class="form-control" placeholder="Cari tim atau liga..."></div>
+                <div class="col-md-2"><input type="date" id="filter-start-date" class="form-control" title="Tanggal Mulai"></div>
+                <div class="col-md-2"><input type="date" id="filter-end-date" class="form-control" title="Tanggal Akhir"></div>
+                <div class="col-md-2"><input type="time" id="filter-start-time" class="form-control" title="Jam Mulai"></div>
+                <div class="col-md-2"><input type="time" id="filter-end-time" class="form-control" title="Jam Akhir"></div>
+                <div class="col-md-1"><button class="btn btn-secondary w-100" onclick="resetFilters()"><i class="fas fa-sync-alt"></i></button></div>
             </div>
         </div>
-        <hr class="my-2">
-        <p class="small mb-0 text-muted"><em>Catatan: Data tersimpan otomatis ke Google Sheets saat kamu klik di luar kotak input. Hanya boleh centang salah satu tipe live per pertandingan.</em></p>
-    </div>
-        <div class="card tutorial-card p-3 mb-4">
-        <h6 class="fw-bold text-primary"><i class="fas fa-tags me-2"></i>Panduan Host/Setup:</h6>
-        <ul class="small mb-0">
-            <li><strong>Notes:</strong> Jika match tersebut Source API Stream nya tidak tersedia,maka harap hubungi admin terkecuali yang live tanpa host , maka tidak perlu disiarkan</li>
 
-        </ul>
+        <div class="card glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <ul class="nav nav-tabs border-0" id="scheduleTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-all-match" type="button" onclick="changeSubTab('all')">
+                            <i class="fas fa-list me-1"></i> All Match
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link position-relative" data-bs-toggle="tab" data-bs-target="#tab-available" type="button" onclick="changeSubTab('available')">
+                            <i class="fas fa-door-open me-1"></i> Match Available
+                            <span id="badge-avail-count" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none">0</span>
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reserved" type="button" onclick="changeSubTab('reserved')">
+                            <i class="fas fa-user-check me-1"></i> Match Reserved
+                        </button>
+                    </li>
+                </ul>
+                <span class="text-secondary loading-spy" id="global-loader-jadwal"><i class="fas fa-spinner fa-spin"></i> Memproses ke Cloud...</span>
+            </div>
+
+            <div class="tab-content mt-2">
+                
+                <div class="tab-pane fade show active" id="tab-all-match">
+                    <div class="guide-box">
+                        <strong><i class="fas fa-info-circle me-1"></i> Panduan Tab "All Match":</strong><br>
+                        Berisi jadwal MENTAH yang belum lewat jamnya. Jadwal yang sudah lewat waktu otomatis pindah ke halaman <strong>History Match</strong>.
+                        <ul class="mb-0 mt-1">
+                            <li>Klik <span class="badge bg-success">+ Host</span> jika match butuh Host.</li>
+                            <li>Klik <span class="badge bg-warning text-dark">+ Setup</span> jika match live tanpa Host (setup saja).</li>
+                            <li>Match yang di-klik otomatis masuk ke antrean <strong>Match Available</strong>.</li>
+                        </ul>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead><tr><th>Jadwal (WIB)</th><th>Liga</th><th>Match</th><th>Status Live</th><th class="text-center" style="width: 250px;">Action</th></tr></thead>
+                            <tbody id="all-match-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="tab-available">
+                    <div class="guide-box">
+                        <strong><i class="fas fa-info-circle me-1"></i> Panduan Tab "Match Available":</strong><br>
+                        Antrean jadwal yang <strong>belum memiliki PIC (Streamer/Setup)</strong>. Pilih nama petugas di kolom Dropdown, match akan otomatis pindah ke <strong>Match Reserved</strong>.
+                    </div>
+                    <div class="mb-3 p-2 bg-light rounded d-flex align-items-center">
+                        <span class="small fw-bold me-3 text-muted"><i class="fas fa-sliders-h me-1"></i> Filter Tipe:</span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-primary" id="btn-sub-all" onclick="setAvailableSubFilter('all')">Semua</button>
+                            <button class="btn btn-outline-success" id="btn-sub-host" onclick="setAvailableSubFilter('host')">🟢 With Host</button>
+                            <button class="btn btn-outline-warning text-dark" id="btn-sub-nohost" onclick="setAvailableSubFilter('nohost')">🟡 Tanpa Host</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead><tr><th>Jadwal (WIB)</th><th>Liga</th><th>Match</th><th>Tipe Live</th><th style="width: 200px;">Pilih PIC Bertugas</th><th class="text-center">Action</th></tr></thead>
+                            <tbody id="available-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="tab-reserved">
+                    <div class="guide-box">
+                        <strong><i class="fas fa-info-circle me-1"></i> Panduan Tab "Match Reserved":</strong><br>
+                        Jadwal yang <strong>sudah matang & memiliki PIC</strong>. Jika match sudah lewat jam tayangnya, ia akan hilang dari sini dan masuk ke <strong>History Match</strong>.
+                    </div>
+                    <div class="mb-3 p-2 bg-light rounded d-flex align-items-center">
+                        <span class="small fw-bold me-3 text-muted"><i class="fas fa-sliders-h me-1"></i> Filter Tipe:</span>
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-primary" id="btn-res-all" onclick="setReservedSubFilter('all')">Semua</button>
+                            <button class="btn btn-outline-success" id="btn-res-host" onclick="setReservedSubFilter('host')">🟢 With Host</button>
+                            <button class="btn btn-outline-warning text-dark" id="btn-res-nohost" onclick="setReservedSubFilter('nohost')">🟡 Tanpa Host</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead><tr><th>Jadwal (WIB)</th><th>Liga</th><th>Match</th><th>Tipe Live</th><th>PIC Bertugas</th><th class="text-center">Action</th></tr></thead>
+                            <tbody id="reserved-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+            
+            <div class="mt-3 fw-bold text-primary small" id="total-match-info">Memuat data...</div>
+            
+        </div>
     </div>
 
-    <div class="card glass-card p-4">
-        <div class="d-flex justify-content-between mb-3">
-            <span class="fw-bold" id="total-match-info">Memuat data...</span>
-            <span class="text-secondary loading-spy" id="global-loader"><i class="fas fa-spinner fa-spin"></i> Menyimpan...</span>
-        </div>
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th>Jadwal (WIB)</th><th>Liga</th><th>Match</th><th>Live Host</th><th>Nama Streamer/Setup</th><th>Tanpa Host</th>
-                    </tr>
-                </thead>
-                <tbody id="table-body"></tbody>
-            </table>
+    <div id="page-history">
+        <header class="mb-4">
+            <h2 class="fw-bold text-dark">History Match</h2>
+            <p class="text-muted">Daftar pertandingan yang jam tayangnya <strong>sudah terlewat</strong>.</p>
+        </header>
+
+        <div class="card glass-card p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="fas fa-archive me-2"></i>Arsip Pertandingan</h5>
+                <div style="width: 300px;">
+                    <input type="text" id="filter-history-search" class="form-control form-control-sm" placeholder="Cari tim di history..." oninput="applyFilters()">
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>Jadwal (WIB)</th>
+                            <th>Liga</th>
+                            <th>Match</th>
+                            <th>Status Pelaksanaan</th>
+                            <th>PIC Bertugas</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-body">
+                        </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <div id="page-streamer">
+        <header class="mb-4">
+            <h2 class="fw-bold text-dark">Manajemen Nama Streamer</h2>
+            <p class="text-muted">Nama di sini otomatis jadi pilihan Dropdown di kaku.</p>
+        </header>
+        <div class="card glass-card p-4 mb-4" style="max-width: 600px;">
+            <h5 class="fw-bold mb-3"><i class="fas fa-user-plus me-2"></i>Tambah Anggota Baru</h5>
+            <div class="input-group mb-3">
+                <input type="text" id="new-streamer-input" class="form-control" placeholder="Ketik nama anggota baru...">
+                <button class="btn btn-primary px-4" onclick="addStreamer()">Tambahkan</button>
+            </div>
+            <span class="text-secondary loading-spy" id="global-loader-streamer"><i class="fas fa-spinner fa-spin"></i> Menyimpan...</span>
+        </div>
+        <div class="card glass-card p-4" style="max-width: 600px;">
+            <h5 class="fw-bold mb-3"><i class="fas fa-list me-2"></i>Daftar Anggota Aktif</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle">
+                    <thead class="bg-light"><tr><th style="width: 80px;">No</th><th class="text-start">Nama Anggota Tim</th></tr></thead>
+                    <tbody id="streamer-list-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-info">
+        <header class="mb-4">
+            <h2 class="fw-bold text-dark">Data & Analytics</h2>
+            <div class="d-flex align-items-center">
+                <p class="text-muted mb-0">Rekapan kerja tim (Menghitung SEMUA match, termasuk yang di History)</p>
+                <span class="text-secondary loading-spy ms-3" id="global-loader-rekapan"><i class="fas fa-spinner fa-spin"></i> Menyimpan...</span>
+            </div>
+        </header>
+        <div class="row g-3 mb-4">
+            <div class="col-md-4"><div class="stat-card" style="border-color: #6c757d;"><p class="text-muted mb-1">Grand Total Semua Match</p><h3 id="stat-total">0</h3></div></div>
+            <div class="col-md-4"><div class="stat-card" style="border-color: #198754;"><p class="text-muted mb-1">Grand Total Dgn Host</p><h3 id="stat-with-host" class="text-success">0</h3></div></div>
+            <div class="col-md-4"><div class="stat-card" style="border-color: #ffc107;"><p class="text-muted mb-1">Grand Total Setup</p><h3 id="stat-no-host" class="text-warning text-dark">0</h3></div></div>
+        </div>
+        <div class="card glass-card p-4">
+            <h5 class="fw-bold mb-3"><i class="fas fa-users me-2"></i>Rekapan Kinerja Streamer & Setup</h5>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle text-center">
+                    <thead class="bg-light align-middle">
+                        <tr>
+                            <th rowspan="2" class="text-start">Nama Anggota</th>
+                            <th colspan="2" class="bg-white">Dari Database (Tgl 21+)</th>
+                            <th colspan="2" class="bg-white">Data Manual (Sblm Tgl 21)</th>
+                            <th rowspan="2" class="bg-primary text-white">Grand Total</th>
+                        </tr>
+                        <tr>
+                            <th class="text-success"><i class="fas fa-microphone"></i> Dgn Host</th>
+                            <th class="text-warning text-dark"><i class="fas fa-cogs"></i> Tanpa Host</th>
+                            <th class="text-success">Dgn Host</th>
+                            <th class="text-warning text-dark">Tanpa Host</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recap-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 <script>
     const sheetAPI = "https://script.google.com/macros/s/AKfycbzPcvcb1KfyQOsJV2zmaS9Z4M8cRJk_mgq6dADyreOOSl_rm_XgHQFv1tmLvgMfcG5T/exec";
-    let localData = [];
-    let activeTags = []; // Array untuk menampung tag yang aktif
+    
+    let localData = [];    
+    let rekapanData = {};  
+    let listStreamer = []; 
+    let currentSubTab = "all"; 
+    let availableSubFilter = "all"; 
+    let reservedSubFilter = "all"; 
+
+    // --- FUNGSI FORMAT TANGGAL ---
+    function formatHariTgl(waktuM) {
+        if (!waktuM) return "";
+        try {
+            let p = waktuM.split(" ");
+            let ymd = p[0].split("-");
+            let d = new Date(ymd[0], ymd[1] - 1, ymd[2]); 
+            let namaHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][d.getDay()];
+            return `${namaHari}, ${ymd[2]}/${ymd[1]}/${ymd[0]}<br><span class="text-primary fw-bold">${p[1]} WIB</span>`;
+        } catch(e) { return waktuM; }
+    }
+
+    // --- FUNGSI NAVIGASI ---
+    function switchPage(pageId, btnElement) {
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+        document.getElementById('page-schedule').style.display = 'none';
+        document.getElementById('page-streamer').style.display = 'none';
+        document.getElementById('page-info').style.display = 'none';
+        document.getElementById('page-history').style.display = 'none';
+        
+        document.getElementById(pageId).style.display = 'block';
+        if(pageId === 'page-info') updateDetailedInfo();
+        if(pageId === 'page-streamer') renderStreamerList();
+        if(pageId === 'page-history' || pageId === 'page-schedule') applyFilters();
+    }
+
+    function changeSubTab(tabName) { currentSubTab = tabName; applyFilters(); }
+    
+    function setAvailableSubFilter(type) {
+        availableSubFilter = type;
+        document.getElementById('btn-sub-all').className = type === 'all' ? 'btn btn-primary' : 'btn btn-outline-primary';
+        document.getElementById('btn-sub-host').className = type === 'host' ? 'btn btn-success' : 'btn btn-outline-success';
+        document.getElementById('btn-sub-nohost').className = type === 'nohost' ? 'btn btn-warning text-dark' : 'btn btn-outline-warning text-dark';
+        applyFilters();
+    }
+
+    function setReservedSubFilter(type) {
+        reservedSubFilter = type;
+        document.getElementById('btn-res-all').className = type === 'all' ? 'btn btn-primary' : 'btn btn-outline-primary';
+        document.getElementById('btn-res-host').className = type === 'host' ? 'btn btn-success' : 'btn btn-outline-success';
+        document.getElementById('btn-res-nohost').className = type === 'nohost' ? 'btn btn-warning text-dark' : 'btn btn-outline-warning text-dark';
+        applyFilters();
+    }
 
     async function loadMasterData() {
         try {
             const res = await fetch(sheetAPI);
-            localData = await res.json();
+            const json = await res.json();
+            localData = json.jadwal || [];
+            rekapanData = json.rekapan || {};
+            listStreamer = json.streamers || []; 
             applyFilters();
+            updateDetailedInfo();
+            renderStreamerList();
         } catch (e) {
-            document.getElementById('table-body').innerHTML = `<tr><td colspan="6" class="text-center text-danger">Gagal load data.</td></tr>`;
+            document.getElementById('total-match-info').innerText = "Gagal load data backend. Pastikan API benar.";
         }
     }
 
-    // Fungsi Toggle Tag
-    function toggleTag(tagName, btnElement) {
-        if (activeTags.includes(tagName)) {
-            activeTags = activeTags.filter(t => t !== tagName);
-            btnElement.classList.remove('active');
-        } else {
-            activeTags.push(tagName);
-            btnElement.classList.add('active');
-        }
-        applyFilters();
+    function renderStreamerList() {
+        const tbody = document.getElementById('streamer-list-body');
+        if(listStreamer.length === 0) { tbody.innerHTML = `<tr><td colspan="2" class="text-muted">Belum ada data</td></tr>`; return; }
+        tbody.innerHTML = listStreamer.map((nama, index) => `<tr><td class="fw-bold text-muted">${index + 1}</td><td class="text-start fw-bold">${nama}</td></tr>`).join('');
     }
 
+    async function addStreamer() {
+        const input = document.getElementById('new-streamer-input');
+        const namaBaru = input.value.trim();
+        if(namaBaru === "") return;
+        const namaRapi = namaBaru.charAt(0).toUpperCase() + namaBaru.slice(1).toLowerCase();
+        if(listStreamer.includes(namaRapi)) { alert("Nama sudah terdaftar!"); return; }
+
+        document.getElementById('global-loader-streamer').style.display = 'inline';
+        listStreamer.push(namaRapi);
+        input.value = "";
+        renderStreamerList(); applyFilters(); updateDetailedInfo();
+        try {
+            await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({type: "streamer_add", nama: namaRapi}) });
+        } finally { document.getElementById('global-loader-streamer').style.display = 'none'; }
+    }
+
+    // --- LOGIKA FILTER GLOBAL & SPLIT WAKTU (BARU) ---
     function applyFilters() {
+        const now = new Date();
+        let upcomingData = [];
+        let pastData = [];
+
+        // 1. PISAHKAN BERDASARKAN JAM WIB TIK TOK
+        localData.forEach(m => {
+            // Ubah format string jadi Date object yang valid (Asumsi m.waktu = "2026-05-21 15:00")
+            let matchDate = new Date(m.waktu.replace(" ", "T") + "+07:00");
+            
+            if (matchDate < now) {
+                pastData.push(m); // Udah lewat
+            } else {
+                upcomingData.push(m); // Belum tayang
+            }
+        });
+
+        // 2. FILTER UNTUK SCHEDULE CENTER (UPCOMING ONLY)
         const s = document.getElementById('filter-search').value.toLowerCase();
         const startD = document.getElementById('filter-start-date').value;
         const endD = document.getElementById('filter-end-date').value;
         const startT = document.getElementById('filter-start-time').value;
         const endT = document.getElementById('filter-end-time').value;
 
-        let filtered = localData;
-
-        // Teks & Waktu
-        if (s) filtered = filtered.filter(i => i.match.toLowerCase().includes(s) || i.liga.toLowerCase().includes(s));
-        if (startD || endD) filtered = filtered.filter(i => { const d = i.waktu.split(' ')[0]; return (!startD || d >= startD) && (!endD || d <= endD); });
-        if (startT || endT) filtered = filtered.filter(i => { const t = i.waktu.split(' ')[1]; return (!startT || t >= startT) && (!endT || t <= endT); });
+        let filteredUpcoming = upcomingData;
         
-        // Multi-Tag Logic (OR Logic: match any active tag)
-        if (activeTags.length > 0) {
-            filtered = filtered.filter(i => {
-                return activeTags.some(tag => {
-                    if (tag === 'with-host') return i.host;
-                    if (tag === 'no-host') return i.tanpaHost;
-                    if (tag === 'has-streamer') return i.streamer.trim() !== "";
-                    if (tag === 'unassigned') return !i.host && !i.tanpaHost;
-                    return false;
-                });
-            });
-        }
+        if (s) filteredUpcoming = filteredUpcoming.filter(i => i.match.toLowerCase().includes(s) || i.liga.toLowerCase().includes(s));
+        if (startD || endD) filteredUpcoming = filteredUpcoming.filter(i => { const d = i.waktu.split(' ')[0]; return (!startD || d >= startD) && (!endD || d <= endD); });
+        if (startT || endT) filteredUpcoming = filteredUpcoming.filter(i => { const t = i.waktu.split(' ')[1]; return (!startT || t >= startT) && (!endT || t <= endT); });
 
-        document.getElementById('total-match-info').innerText = `Menampilkan ${filtered.length} dari ${localData.length} pertandingan`;
-        renderTable(filtered);
+        // Update Badge Counter Available
+        let totalAvail = filteredUpcoming.filter(m => (m.host || m.tanpaHost) && m.streamer.trim() === "").length;
+        const badge = document.getElementById('badge-avail-count');
+        if(totalAvail > 0) { badge.innerText = totalAvail; badge.classList.remove('d-none'); } else { badge.classList.add('d-none'); }
+
+        // Render Schedule Center Tabs
+        if (currentSubTab === "all") renderAllMatch(filteredUpcoming);
+        else if (currentSubTab === "available") renderAvailableMatch(filteredUpcoming);
+        else if (currentSubTab === "reserved") renderReservedMatch(filteredUpcoming);
+
+        // 3. FILTER UNTUK HISTORY MATCH
+        // Urutkan dari yang paling baru lewat
+        pastData.sort((a, b) => new Date(b.waktu.replace(" ", "T") + "+07:00") - new Date(a.waktu.replace(" ", "T") + "+07:00"));
+        
+        const sHist = document.getElementById('filter-history-search').value.toLowerCase();
+        let filteredPast = pastData;
+        if(sHist) filteredPast = filteredPast.filter(i => i.match.toLowerCase().includes(sHist) || i.liga.toLowerCase().includes(sHist));
+        
+        renderHistoryMatch(filteredPast);
     }
 
-    function renderTable(data) {
-        const tbody = document.getElementById('table-body');
+    // 1. RENDER TAB ALL MATCH (UPCOMING)
+    function renderAllMatch(data) {
+        document.getElementById('total-match-info').innerText = `Menampilkan ${data.length} jadwal Upcoming di All Match`;
+        const tbody = document.getElementById('all-match-body');
+        
+        if(data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted p-4">Tidak ada jadwal mendatang yang sesuai filter.</td></tr>`; return;
+        }
+
         tbody.innerHTML = data.map(m => {
-            let rowClass = m.host ? 'row-with-host' : (m.tanpaHost ? 'row-no-host' : '');
-            let input = (m.host || m.tanpaHost) 
-                ? `<input type="text" class="form-control form-control-sm" value="${m.streamer}" onchange="updateDatabase(${m.rowId}, 'streamer', this.value)">`
-                : `<span class="text-muted small">❌ Pilih tipe live</span>`;
+            let statusBadge = `<span class="badge bg-secondary">⚪ Belum Diatur</span>`;
+            if (m.host) statusBadge = `<span class="badge bg-success">🟢 Live Host</span>`;
+            if (m.tanpaHost) statusBadge = `<span class="badge bg-warning text-dark">🟡 Tanpa Host</span>`;
             
-            return `
-                <tr id="row-${m.rowId}" class="${rowClass}">
-                    <td><strong>${m.waktu}</strong></td>
-                    <td><span class="badge bg-secondary">${m.liga}</span></td>
-                    <td class="fw-bold">${m.match}</td>
-                    <td class="text-center"><input type="checkbox" ${m.host ? 'checked' : ''} onchange="toggleType(${m.rowId}, 'host', this.checked)"></td>
-                    <td>${input}</td>
-                    <td class="text-center"><input type="checkbox" ${m.tanpaHost ? 'checked' : ''} onchange="toggleType(${m.rowId}, 'tanpaHost', this.checked)"></td>
-                </tr>`;
+            let actionBtn = `
+                <button class="btn btn-sm btn-outline-success me-1" onclick="triggerAction(${m.rowId}, 'add-host')">+ Host</button>
+                <button class="btn btn-sm btn-outline-warning text-dark" onclick="triggerAction(${m.rowId}, 'add-nohost')">+ Setup</button>
+            `;
+            if (m.host || m.tanpaHost) {
+                actionBtn = `<button class="btn btn-sm btn-danger px-3" onclick="triggerAction(${m.rowId}, 'remove')"><i class="fas fa-trash-alt"></i> Remove</button>`;
+            }
+
+            return `<tr>
+                <td><small>${formatHariTgl(m.waktu)}</small></td>
+                <td><span class="badge bg-light text-dark">${m.liga}</span></td>
+                <td class="fw-bold">${m.match}</td><td>${statusBadge}</td><td class="text-center">${actionBtn}</td>
+            </tr>`;
         }).join('');
     }
 
-    async function toggleType(rowId, field, val) {
-        const idx = localData.findIndex(i => i.rowId === rowId);
-        if (val) {
-            localData[idx].host = (field === 'host');
-            localData[idx].tanpaHost = (field === 'tanpaHost');
-            await updateDatabase(rowId, field === 'host' ? 'tanpaHost' : 'host', false);
-        } else {
-            localData[idx][field] = false;
-            localData[idx].streamer = "";
-            await updateDatabase(rowId, 'streamer', "");
+    // 2. RENDER TAB MATCH AVAILABLE (UPCOMING)
+    function renderAvailableMatch(data) {
+        let availData = data.filter(m => (m.host || m.tanpaHost) && m.streamer.trim() === "");
+        if (availableSubFilter === 'host') availData = availData.filter(m => m.host);
+        if (availableSubFilter === 'nohost') availData = availData.filter(m => m.tanpaHost);
+
+        document.getElementById('total-match-info').innerText = `Menampilkan ${availData.length} jadwal Upcoming di Match Available`;
+        const tbody = document.getElementById('available-body');
+
+        if(availData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted p-4">Tidak ada jadwal available.</td></tr>`; return;
         }
-        await updateDatabase(rowId, field, val);
-        applyFilters();
+
+        let optionsHtml = `<option value="" selected disabled>-- Pilih PIC --</option>`;
+        listStreamer.forEach(n => optionsHtml += `<option value="${n}">${n}</option>`);
+
+        tbody.innerHTML = availData.map(m => {
+            let tipe = m.host ? `<span class="badge bg-success">🟢 With Host</span>` : `<span class="badge bg-warning text-dark">🟡 Tanpa Host</span>`;
+            return `<tr>
+                <td><small>${formatHariTgl(m.waktu)}</small></td>
+                <td><span class="badge bg-light text-dark">${m.liga}</span></td>
+                <td class="fw-bold">${m.match}</td><td>${tipe}</td>
+                <td><select class="form-select form-select-sm fw-bold border-primary text-primary" onchange="assignPIC(${m.rowId}, this.value)">${optionsHtml}</select></td>
+                <td class="text-center"><button class="btn btn-sm btn-danger" onclick="triggerAction(${m.rowId}, 'remove')"><i class="fas fa-times"></i> Remove</button></td>
+            </tr>`;
+        }).join('');
     }
 
-    async function updateDatabase(rowId, field, val) {
-        document.getElementById('global-loader').style.display = 'inline';
-        const idx = localData.findIndex(i => i.rowId === rowId);
-        localData[idx][field] = val;
-        try {
-            await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({rowId, field, value: val}) });
-        } finally {
-            document.getElementById('global-loader').style.display = 'none';
+    // 3. RENDER TAB MATCH RESERVED (UPCOMING)
+    function renderReservedMatch(data) {
+        let reservedData = data.filter(m => (m.host || m.tanpaHost) && m.streamer.trim() !== "");
+        if (reservedSubFilter === 'host') reservedData = reservedData.filter(m => m.host);
+        if (reservedSubFilter === 'nohost') reservedData = reservedData.filter(m => m.tanpaHost);
+
+        document.getElementById('total-match-info').innerText = `Menampilkan ${reservedData.length} jadwal Upcoming di Match Reserved`;
+        const tbody = document.getElementById('reserved-body');
+
+        if(reservedData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted p-4">Belum ada jadwal yang di-booking.</td></tr>`; return;
         }
+
+        tbody.innerHTML = reservedData.map(m => {
+            let tipe = m.host ? `<span class="badge bg-success">🟢 With Host</span>` : `<span class="badge bg-warning text-dark">🟡 Tanpa Host</span>`;
+            return `<tr style="background-color: #f8f9fa;">
+                <td><small>${formatHariTgl(m.waktu)}</small></td>
+                <td><span class="badge bg-light text-dark">${m.liga}</span></td>
+                <td class="fw-bold text-secondary">${m.match}</td><td>${tipe}</td>
+                <td><span class="badge bg-primary fs-6 px-3"><i class="fas fa-user me-1"></i> ${m.streamer}</span></td>
+                <td class="text-center">
+                    <button class="btn btn-sm btn-warning me-1 text-dark" onclick="triggerAction(${m.rowId}, 'reset-pic')"><i class="fas fa-undo"></i> Reset PIC</button>
+                    <button class="btn btn-sm btn-danger" onclick="triggerAction(${m.rowId}, 'remove')"><i class="fas fa-trash-alt"></i> Remove All</button>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    // 4. RENDER TAB HISTORY MATCH (PAST)
+    function renderHistoryMatch(data) {
+        const tbody = document.getElementById('history-body');
+        if(data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted p-4">Belum ada history pertandingan yang lewat.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = data.map(m => {
+            // Cek apakah pas match tayang, dia sempet dapet PIC atau malah dianggurin
+            let status = "";
+            if (m.streamer.trim() !== "") {
+                let tipeLive = m.host ? "Host" : "Setup";
+                status = `<span class="badge bg-success"><i class="fas fa-check-circle"></i> Selesai (${tipeLive})</span>`;
+            } else if (m.host || m.tanpaHost) {
+                status = `<span class="badge bg-danger"><i class="fas fa-exclamation-circle"></i> Terlewat (Lupa diisi PIC)</span>`;
+            } else {
+                status = `<span class="badge bg-secondary"><i class="fas fa-minus-circle"></i> Tidak disiarkan</span>`;
+            }
+
+            let picInfo = m.streamer.trim() !== "" ? `<span class="fw-bold text-primary"><i class="fas fa-user me-1"></i> ${m.streamer}</span>` : `<span class="text-muted">-</span>`;
+            
+            return `<tr>
+                <td><small>${formatHariTgl(m.waktu)}</small></td>
+                <td><span class="badge bg-light text-dark">${m.liga}</span></td>
+                <td class="fw-bold text-secondary">${m.match}</td>
+                <td>${status}</td>
+                <td>${picInfo}</td>
+            </tr>`;
+        }).join('');
+    }
+
+    // --- SAKTI ENGINE ACTION ---
+    async function triggerAction(rowId, action) {
+        const idx = localData.findIndex(i => i.rowId === rowId);
+        if(idx === -1) return;
+
+        if (action === 'add-host') {
+            localData[idx].host = true; localData[idx].tanpaHost = false; localData[idx].streamer = "";
+            await executePost(rowId, 'host', true); await executePost(rowId, 'tanpaHost', false); await executePost(rowId, 'streamer', "");
+        } else if (action === 'add-nohost') {
+            localData[idx].host = false; localData[idx].tanpaHost = true; localData[idx].streamer = "";
+            await executePost(rowId, 'host', false); await executePost(rowId, 'tanpaHost', true); await executePost(rowId, 'streamer', "");
+        } else if (action === 'remove') {
+            localData[idx].host = false; localData[idx].tanpaHost = false; localData[idx].streamer = "";
+            await executePost(rowId, 'host', false); await executePost(rowId, 'tanpaHost', false); await executePost(rowId, 'streamer', "");
+        } else if (action === 'reset-pic') {
+            localData[idx].streamer = "";
+            await executePost(rowId, 'streamer', "");
+        }
+        applyFilters(); updateDetailedInfo();
+    }
+
+    async function assignPIC(rowId, namaPIC) {
+        const idx = localData.findIndex(i => i.rowId === rowId);
+        if(idx === -1 || !namaPIC) return;
+        localData[idx].streamer = namaPIC;
+        applyFilters(); 
+        await executePost(rowId, 'streamer', namaPIC);
+        updateDetailedInfo();
+    }
+
+    async function executePost(rowId, field, val) {
+        document.getElementById('global-loader-jadwal').style.display = 'inline';
+        try {
+            await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({type: "jadwal", rowId, field, value: val}) });
+        } finally { document.getElementById('global-loader-jadwal').style.display = 'none'; }
+    }
+
+    // --- REKAPAN DETAILED INFO ---
+    function updateDetailedInfo() {
+        // Detailed info menghitung total SEMUA jadwal (termasuk yang lewat)
+        let sysHostTotal = localData.filter(d => d.host).length;
+        let sysTanpaHostTotal = localData.filter(d => d.tanpaHost).length;
+        let sysTotalMatch = localData.length;
+
+        let totalManualHost = 0; let totalManualTanpaHost = 0;
+        Object.values(rekapanData).forEach(val => { totalManualHost += val.host; totalManualTanpaHost += val.tanpaHost; });
+
+        document.getElementById('stat-total').innerText = sysTotalMatch + totalManualHost + totalManualTanpaHost;
+        document.getElementById('stat-with-host').innerText = sysHostTotal + totalManualHost;
+        document.getElementById('stat-no-host').innerText = sysTanpaHostTotal + totalManualTanpaHost;
+
+        let hitunganSistem = {};
+        localData.forEach(d => {
+            if (d.streamer && d.streamer.trim() !== "") {
+                let nama = d.streamer.trim();
+                nama = nama.charAt(0).toUpperCase() + nama.slice(1).toLowerCase();
+                if (!hitunganSistem[nama]) { hitunganSistem[nama] = { host: 0, tanpaHost: 0 }; }
+                if (d.host) hitunganSistem[nama].host++;
+                if (d.tanpaHost) hitunganSistem[nama].tanpaHost++;
+            }
+        });
+
+        let semuaNama = new Set([...listStreamer, ...Object.keys(hitunganSistem), ...Object.keys(rekapanData)]);
+        let htmlRekapan = "";
+        semuaNama.forEach(nama => {
+            let sysHost = hitunganSistem[nama] ? hitunganSistem[nama].host : 0;
+            let sysTanpaHost = hitunganSistem[nama] ? hitunganSistem[nama].tanpaHost : 0;
+            let manHost = rekapanData[nama] ? rekapanData[nama].host : 0;
+            let manTanpaHost = rekapanData[nama] ? rekapanData[nama].tanpaHost : 0;
+            let grandTotal = sysHost + sysTanpaHost + manHost + manTanpaHost;
+
+            htmlRekapan += `<tr>
+                <td class="text-start fw-bold">${nama}</td><td class="text-success fw-bold">${sysHost}</td><td class="text-warning text-dark fw-bold">${sysTanpaHost}</td>
+                <td><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" value="${manHost}" onchange="updateDatabaseRekapan('${nama}', 'host', this.value)"></td>
+                <td><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" value="${manTanpaHost}" onchange="updateDatabaseRekapan('${nama}', 'tanpaHost', this.value)"></td>
+                <td class="fw-bold fs-5 bg-light ${grandTotal > 0 ? 'text-primary' : 'text-muted'}">${grandTotal}</td>
+            </tr>`;
+        });
+        document.getElementById('recap-body').innerHTML = htmlRekapan;
+    }
+
+    async function updateDatabaseRekapan(nama, tipe, nilai) {
+        document.getElementById('global-loader-rekapan').style.display = 'inline';
+        let numVal = parseInt(nilai) || 0;
+        if (!rekapanData[nama]) rekapanData[nama] = { host: 0, tanpaHost: 0 };
+        rekapanData[nama][tipe] = numVal;
+        try {
+            await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({type: "rekapan", nama, field: tipe, value: numVal}) });
+        } finally { document.getElementById('global-loader-rekapan').style.display = 'none'; }
+        updateDetailedInfo();
     }
 
     function resetFilters() {
-        document.querySelectorAll('input').forEach(i => i.value = '');
-        activeTags = [];
-        document.querySelectorAll('.btn-tag').forEach(b => b.classList.remove('active'));
+        document.getElementById('filter-search').value = '';
+        document.getElementById('filter-start-date').value = '';
+        document.getElementById('filter-end-date').value = '';
+        document.getElementById('filter-start-time').value = '';
+        document.getElementById('filter-end-time').value = '';
         applyFilters();
     }
 
-    document.getElementById('filter-search').addEventListener('input', applyFilters);
-    document.getElementById('filter-start-date').addEventListener('change', applyFilters);
-    document.getElementById('filter-end-date').addEventListener('change', applyFilters);
-    document.getElementById('filter-start-time').addEventListener('input', applyFilters);
-    document.getElementById('filter-end-time').addEventListener('input', applyFilters);
+    document.querySelectorAll('#page-schedule input').forEach(i => i.addEventListener('input', applyFilters));
+    
+    const script = document.createElement('script');
+    script.src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js";
+    document.head.appendChild(script);
+
     loadMasterData();
 </script>
 </body>
