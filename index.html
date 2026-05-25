@@ -8,12 +8,9 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         body { background-color: #f4f7f6; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; overflow-x: hidden; }
-        
-        /* LOGIN OVERLAY */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #1e1e2d; z-index: 9999; display: flex; align-items: center; justify-content: center; }
         .login-card { background: #fff; padding: 40px; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
-        
-        #app-container { display: none; } /* Hidden until logged in */
+        #app-container { display: none; } 
         
         .sidebar { height: 100vh; position: fixed; width: 250px; background: #1e1e2d; color: #a2a3b7; padding-top: 20px; transition: 0.3s; z-index: 1000; }
         .sidebar .brand { color: #fff; font-size: 1.2rem; font-weight: bold; text-align: center; margin-bottom: 20px; padding: 0 15px; }
@@ -31,7 +28,7 @@
         .nav-tabs .nav-link { font-weight: bold; color: #495057; border-radius: 10px 10px 0 0; }
         .nav-tabs .nav-link.active { background-color: #fff; color: #0d6efd !important; border-bottom-color: transparent; }
         
-        .admin-only { display: none; } /* Show only if admin */
+        .admin-only { display: none; } 
         .page-content { display: none; }
         #page-schedule { display: block; }
     </style>
@@ -61,14 +58,12 @@
         
         <a class="nav-btn active" onclick="switchPage('page-schedule', this)"><i class="fas fa-calendar-alt me-2"></i> Schedule Center</a>
         <a class="nav-btn" onclick="switchPage('page-history', this)"><i class="fas fa-history me-2"></i> History Match</a>
-        
         <a class="nav-btn admin-only" onclick="switchPage('page-streamer', this)"><i class="fas fa-microphone me-2"></i> Data Streamer</a>
         <a class="nav-btn admin-only" onclick="switchPage('page-info', this)"><i class="fas fa-chart-pie me-2"></i> Rekapan Kerja</a>
         <a class="nav-btn admin-only" onclick="switchPage('page-users', this)"><i class="fas fa-users-cog me-2"></i> Kelola Akun</a>
     </div>
 
     <div class="main-content">
-        
         <div id="page-schedule" class="page-content">
             <header class="mb-4">
                 <h2 class="fw-bold text-dark">Live Schedule Center</h2>
@@ -76,19 +71,29 @@
             </header>
 
             <div class="card glass-card p-4 mb-4">
-                <h5 class="fw-bold mb-3"><i class="fas fa-filter me-2"></i>Filter Jadwal</h5>
+                <h5 class="fw-bold mb-3"><i class="fas fa-filter me-2"></i>Filter Tampilan Tabel</h5>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4"><input type="text" id="filter-search" class="form-control form-control-sm" placeholder="Cari tim atau liga..."></div>
+                    <div class="col-md-4">
+                        <select id="filter-tipe-sch" class="form-select form-select-sm border-primary fw-bold text-primary">
+                            <option value="">Semua Tipe Live</option>
+                            <option value="host">Hanya Dengan Host</option>
+                            <option value="setup">Hanya Tanpa Host (Setup)</option>
+                            <option value="belum">Hanya Belum Diatur</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select id="filter-pic-sch" class="form-select form-select-sm border-success fw-bold text-success" title="Filter by PIC">
+                            <option value="">Semua PIC</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="row g-2">
-                    <div class="col-md-2"><input type="text" id="filter-search" class="form-control form-control-sm" placeholder="Cari tim..."></div>
                     <div class="col-md-2"><input type="date" id="filter-start-date" class="form-control form-control-sm" title="Tgl Mulai"></div>
                     <div class="col-md-2"><input type="date" id="filter-end-date" class="form-control form-control-sm" title="Tgl Akhir"></div>
                     <div class="col-md-2"><input type="time" id="filter-start-time" class="form-control form-control-sm" title="Jam Mulai"></div>
                     <div class="col-md-2"><input type="time" id="filter-end-time" class="form-control form-control-sm" title="Jam Akhir"></div>
-                    <div class="col-md-1">
-                        <select id="filter-pic-sch" class="form-select form-select-sm" title="Filter by PIC">
-                            <option value="">Semua PIC</option>
-                        </select>
-                    </div>
-                    <div class="col-md-1"><button class="btn btn-secondary btn-sm w-100" onclick="resetFilters('schedule')"><i class="fas fa-sync-alt"></i></button></div>
+                    <div class="col-md-4"><button class="btn btn-secondary btn-sm w-100 fw-bold" onclick="resetFilters('schedule')"><i class="fas fa-sync-alt me-1"></i> Reset Semua Filter</button></div>
                 </div>
             </div>
 
@@ -103,11 +108,15 @@
                         </li>
                         <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-reserved" type="button" onclick="changeSubTab('reserved')">Reserved</button></li>
                     </ul>
-                    <span class="text-secondary loading-spy" id="global-loader-jadwal"><i class="fas fa-spinner fa-spin"></i> Memproses...</span>
+                    <span class="text-secondary fw-bold" id="global-loader-jadwal" style="display:none; font-size: 0.9em;"><i class="fas fa-spinner fa-spin"></i> Memproses...</span>
                 </div>
 
                 <div class="tab-content mt-2">
                     <div class="tab-pane fade show active" id="tab-all-match">
+                        <div class="d-flex justify-content-between align-items-center mb-3 admin-only bg-light p-2 rounded border border-secondary">
+                            <div class="text-muted small"><i class="fas fa-info-circle"></i> Merubah jadwal "Belum Diatur" menjadi "Tanpa Host" (Setup) massal.</div>
+                            <button class="btn btn-warning btn-sm text-dark fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalBulkSetup"><i class="fas fa-bolt"></i> Aksi Massal: Ubah ke Setup</button>
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
                                 <thead><tr><th>Jadwal (WIB)</th><th>Liga</th><th>Match</th><th>Status</th><th class="text-center admin-only" style="width:200px;">Action Admin</th></tr></thead>
@@ -115,7 +124,12 @@
                             </table>
                         </div>
                     </div>
+                    
                     <div class="tab-pane fade" id="tab-available">
+                        <div class="d-flex justify-content-between align-items-center mb-3 admin-only bg-light p-2 rounded border border-warning">
+                            <div class="text-muted small"><i class="fas fa-info-circle"></i> Mengisi nama PIC khusus untuk jadwal "Tanpa Host" massal.</div>
+                            <button class="btn btn-warning btn-sm text-dark fw-bold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalBulkAssign"><i class="fas fa-users-cog"></i> Aksi Massal: Isi PIC Setup</button>
+                        </div>
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
                                 <thead><tr><th>Jadwal (WIB)</th><th>Liga</th><th>Match</th><th>Tipe Live</th><th class="admin-only" style="width:200px;">Pilih PIC</th><th class="text-center admin-only">Action Admin</th></tr></thead>
@@ -123,6 +137,7 @@
                             </table>
                         </div>
                     </div>
+                    
                     <div class="tab-pane fade" id="tab-reserved">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
@@ -141,18 +156,27 @@
             
             <div class="card glass-card p-4 mb-4">
                 <h5 class="fw-bold mb-3"><i class="fas fa-filter me-2"></i>Filter History</h5>
+                <div class="row g-2 mb-2">
+                    <div class="col-md-4"><input type="text" id="filter-search-hist" class="form-control form-control-sm" placeholder="Cari tim atau liga..."></div>
+                    <div class="col-md-4">
+                        <select id="filter-tipe-hist" class="form-select form-select-sm border-primary fw-bold text-primary">
+                            <option value="">Semua Tipe Live</option>
+                            <option value="host">Hanya Dengan Host</option>
+                            <option value="setup">Hanya Tanpa Host (Setup)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <select id="filter-pic-hist" class="form-select form-select-sm border-success fw-bold text-success" title="Filter by PIC">
+                            <option value="">Semua PIC</option>
+                        </select>
+                    </div>
+                </div>
                 <div class="row g-2">
-                    <div class="col-md-2"><input type="text" id="filter-search-hist" class="form-control form-control-sm" placeholder="Cari tim..."></div>
                     <div class="col-md-2"><input type="date" id="filter-start-date-hist" class="form-control form-control-sm" title="Tgl Mulai"></div>
                     <div class="col-md-2"><input type="date" id="filter-end-date-hist" class="form-control form-control-sm" title="Tgl Akhir"></div>
                     <div class="col-md-2"><input type="time" id="filter-start-time-hist" class="form-control form-control-sm" title="Jam Mulai"></div>
                     <div class="col-md-2"><input type="time" id="filter-end-time-hist" class="form-control form-control-sm" title="Jam Akhir"></div>
-                    <div class="col-md-1">
-                        <select id="filter-pic-hist" class="form-select form-select-sm" title="Filter by PIC">
-                            <option value="">Semua PIC</option>
-                        </select>
-                    </div>
-                    <div class="col-md-1"><button class="btn btn-secondary btn-sm w-100" onclick="resetFilters('history')"><i class="fas fa-sync-alt"></i></button></div>
+                    <div class="col-md-4"><button class="btn btn-secondary btn-sm w-100 fw-bold" onclick="resetFilters('history')"><i class="fas fa-sync-alt me-1"></i> Reset Semua Filter</button></div>
                 </div>
             </div>
 
@@ -245,20 +269,100 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
+<div class="modal fade" id="modalBulkSetup" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-warning">
+            <div class="modal-header bg-light border-bottom-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-bolt text-warning me-2"></i>Aksi Massal: Ke Setup</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-check form-switch mb-3 bg-light p-2 rounded border">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" id="b1-all-time" onchange="document.getElementById('b1-time-inputs').style.display = this.checked ? 'none' : 'block'">
+                    <label class="form-check-label small fw-bold text-danger" for="b1-all-time">Terapkan ke SEMUA JADWAL (Abaikan Filter Waktu)</label>
+                </div>
+                
+                <div id="b1-time-inputs">
+                    <p class="small text-muted mb-2">Atau, pilih rentang waktu spesifik:</p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Tanggal Pertandingan</label>
+                        <input type="date" id="b1-date" class="form-control border-warning">
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Mulai Jam</label>
+                            <input type="time" id="b1-start" class="form-control border-warning">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Sampai Jam</label>
+                            <input type="time" id="b1-end" class="form-control border-warning">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 bg-light">
+                <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-warning btn-sm text-dark fw-bold px-4" onclick="executeBulkSetup()">Filter & Proses</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalBulkAssign" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-warning">
+            <div class="modal-header bg-light border-bottom-0">
+                <h5 class="modal-title fw-bold text-dark"><i class="fas fa-users-cog text-warning me-2"></i>Aksi Massal: Isi PIC Setup</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold text-primary">Pilih Nama PIC</label>
+                    <select id="b2-pic" class="form-select border-primary fw-bold text-primary"></select>
+                </div>
+
+                <div class="form-check form-switch mb-3 bg-light p-2 rounded border">
+                    <input class="form-check-input ms-0 me-2" type="checkbox" id="b2-all-time" onchange="document.getElementById('b2-time-inputs').style.display = this.checked ? 'none' : 'block'">
+                    <label class="form-check-label small fw-bold text-danger" for="b2-all-time">Terapkan ke SEMUA JADWAL (Abaikan Filter Waktu)</label>
+                </div>
+                
+                <div id="b2-time-inputs">
+                    <p class="small text-muted mb-2">Atau, pilih rentang waktu spesifik:</p>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Tanggal Pertandingan</label>
+                        <input type="date" id="b2-date" class="form-control border-warning">
+                    </div>
+                    <div class="row">
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Mulai Jam</label>
+                            <input type="time" id="b2-start" class="form-control border-warning">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-bold">Sampai Jam</label>
+                            <input type="time" id="b2-end" class="form-control border-warning">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-top-0 bg-light">
+                <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-warning btn-sm text-dark fw-bold px-4" onclick="executeBulkAssign()">Filter & Proses</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 <script>
-    // MASUKIN LINK API GOOGLE APPS SCRIPT LU DI SINI YA BANG!
+    // MASUKIN LINK API GOOGLE APPS SCRIPT LU DI SINI 
     const sheetAPI = "https://script.google.com/macros/s/AKfycbzPcvcb1KfyQOsJV2zmaS9Z4M8cRJk_mgq6dADyreOOSl_rm_XgHQFv1tmLvgMfcG5T/exec"; 
     
-    // VARIABEL GLOBAL
     let localData = []; let rekapanData = {}; let listStreamer = []; let listUsers = [];
-    let currentSubTab = "all"; 
-    let activeUser = { username: "", role: "" };
+    let currentSubTab = "all"; let activeUser = { username: "", role: "" };
 
-    // --- FUNGSI FORMAT TANGGAL ---
     function formatHariTgl(waktuM) {
         if (!waktuM) return "";
         try {
@@ -269,67 +373,46 @@
         } catch(e) { return waktuM; }
     }
 
-    // --- SISTEM LOGIN & AUTHENTICATION ---
+    function isUpcoming(waktuM) {
+        let now = new Date();
+        try {
+            let p = waktuM.split(" "), tgl = p[0].split("-"), jam = p[1].split(":");
+            return new Date(tgl[0], tgl[1]-1, tgl[2], jam[0], jam[1], 0) >= now;
+        } catch(e) { return true; }
+    }
+
     async function initApp() {
         const savedUser = localStorage.getItem('scc_user');
-        if(savedUser) {
-            activeUser = JSON.parse(savedUser);
-            showApp();
-        } else {
+        if(savedUser) { activeUser = JSON.parse(savedUser); showApp(); } 
+        else {
             document.getElementById('login-loader').style.display = 'inline';
-            try {
-                const res = await fetch(sheetAPI); const json = await res.json();
-                listUsers = json.users || [];
-                document.getElementById('login-loader').style.display = 'none';
-            } catch(e) { alert("Gagal konek ke database."); }
+            try { const res = await fetch(sheetAPI); const json = await res.json(); listUsers = json.users || []; document.getElementById('login-loader').style.display = 'none'; } 
+            catch(e) { alert("Gagal konek ke database."); }
         }
     }
 
     function processLogin() {
-        const u = document.getElementById('login-username').value.trim();
-        const p = document.getElementById('login-password').value.trim();
-        const err = document.getElementById('login-error');
-        
+        const u = document.getElementById('login-username').value.trim(); const p = document.getElementById('login-password').value.trim(); const err = document.getElementById('login-error');
         let found = listUsers.find(x => x.username === u && x.password === p);
         if (u === 'admin' && p === 'admin123' && !found) found = {username: 'admin', role: 'Admin'};
-
-        if (found) {
-            err.style.display = 'none';
-            activeUser = { username: found.username, role: found.role };
-            localStorage.setItem('scc_user', JSON.stringify(activeUser));
-            showApp();
-        } else {
-            err.style.display = 'block';
-        }
+        if (found) { err.style.display = 'none'; activeUser = { username: found.username, role: found.role }; localStorage.setItem('scc_user', JSON.stringify(activeUser)); showApp(); } 
+        else { err.style.display = 'block'; }
     }
 
-    function logout() {
-        localStorage.removeItem('scc_user');
-        location.reload();
-    }
+    function logout() { localStorage.removeItem('scc_user'); location.reload(); }
 
     function showApp() {
-        document.getElementById('login-overlay').style.display = 'none';
-        document.getElementById('app-container').style.display = 'block';
-        document.getElementById('display-username').innerText = activeUser.username;
-        document.getElementById('display-role').innerText = activeUser.role;
+        document.getElementById('login-overlay').style.display = 'none'; document.getElementById('app-container').style.display = 'block';
+        document.getElementById('display-username').innerText = activeUser.username; document.getElementById('display-role').innerText = activeUser.role;
         
-        if(activeUser.role === 'Host') {
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-        } else {
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = ''); 
-        }
-        
+        if(activeUser.role === 'Host') { document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none'); } 
+        else { document.querySelectorAll('.admin-only').forEach(el => el.style.display = ''); }
         loadMasterData();
     }
 
-    // --- NAVIGASI HALAMAN ---
     function switchPage(pageId, btnElement) {
-        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-        btnElement.classList.add('active');
-        document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
-        document.getElementById(pageId).style.display = 'block';
-        
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active')); btnElement.classList.add('active');
+        document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none'); document.getElementById(pageId).style.display = 'block';
         if(pageId === 'page-info') updateDetailedInfo();
         if(pageId === 'page-streamer') renderStreamerList();
         if(pageId === 'page-users') renderUserList();
@@ -337,7 +420,6 @@
     }
     function changeSubTab(tabName) { currentSubTab = tabName; applyFilters(); }
 
-    // --- DATA FETCHER ---
     async function loadMasterData() {
         try {
             const res = await fetch(sheetAPI); const json = await res.json();
@@ -345,88 +427,82 @@
             listStreamer = json.streamers || []; listUsers = json.users || [];
             
             let picOptions = `<option value="">Semua PIC</option>`;
-            listStreamer.forEach(n => picOptions += `<option value="${n}">${n}</option>`);
+            let bulkPicOptions = `<option value="" selected disabled>-- Pilih PIC --</option>`;
+            listStreamer.forEach(n => {
+                picOptions += `<option value="${n}">${n}</option>`;
+                bulkPicOptions += `<option value="${n}">${n}</option>`;
+            });
             document.getElementById('filter-pic-sch').innerHTML = picOptions;
             document.getElementById('filter-pic-hist').innerHTML = picOptions;
+            document.getElementById('b2-pic').innerHTML = bulkPicOptions; 
 
             applyFilters();
         } catch (e) { document.getElementById('total-match-info').innerText = "Gagal load jadwal."; }
     }
 
-    // --- LOGIKA FILTER (HISTORY & SCHEDULE) ---
     function applyFilters() {
-        const now = new Date();
-        let upcomingData = []; let pastData = [];
-
+        const now = new Date(); let upcomingData = []; let pastData = [];
         localData.forEach(m => {
-            try {
-                let p = m.waktu.split(" "), tgl = p[0].split("-"), jam = p[1].split(":");
-                let matchDate = new Date(tgl[0], tgl[1] - 1, tgl[2], jam[0], jam[1], 0);
-                if (matchDate < now) pastData.push(m); else upcomingData.push(m);
-            } catch(e) { upcomingData.push(m); }
+            try { let p = m.waktu.split(" "), tgl = p[0].split("-"), jam = p[1].split(":"); let matchDate = new Date(tgl[0], tgl[1] - 1, tgl[2], jam[0], jam[1], 0); if (matchDate < now) pastData.push(m); else upcomingData.push(m); } 
+            catch(e) { upcomingData.push(m); }
         });
 
-        // ================== FILTER SCHEDULE ==================
+        // TANGKAP FILTER SCHEDULE
         const s = document.getElementById('filter-search').value.toLowerCase();
+        const tipeF = document.getElementById('filter-tipe-sch').value;
         const startD = document.getElementById('filter-start-date').value;
         const endD = document.getElementById('filter-end-date').value;
         const startT = document.getElementById('filter-start-time').value;
         const endT = document.getElementById('filter-end-time').value;
         const picF = document.getElementById('filter-pic-sch').value;
-
+        
         let filUp = upcomingData;
         if (s) filUp = filUp.filter(i => i.match.toLowerCase().includes(s) || i.liga.toLowerCase().includes(s));
+        // Logika Filter Tipe Live
+        if (tipeF === 'host') filUp = filUp.filter(i => i.host);
+        if (tipeF === 'setup') filUp = filUp.filter(i => i.tanpaHost);
+        if (tipeF === 'belum') filUp = filUp.filter(i => !i.host && !i.tanpaHost);
+        
         if (startD || endD) filUp = filUp.filter(i => { const d = i.waktu.split(' ')[0]; return (!startD || d >= startD) && (!endD || d <= endD); });
-        if (startT || endT) filUp = filUp.filter(i => { 
-            let j = i.waktu.split(' ')[1]; if(j.length < 5) j = "0" + j; 
-            return (!startT || j >= startT) && (!endT || j <= endT); 
-        });
+        if (startT || endT) filUp = filUp.filter(i => { let j = i.waktu.split(' ')[1]; if(j.length < 5) j = "0" + j; return (!startT || j >= startT) && (!endT || j <= endT); });
         if (picF) filUp = filUp.filter(i => i.streamer.includes(picF));
 
         let totalAvail = filUp.filter(m => (m.host || m.tanpaHost) && (!m.streamer || m.streamer.trim() === "")).length;
         const badge = document.getElementById('badge-avail-count');
         if(totalAvail > 0) { badge.innerText = totalAvail; badge.classList.remove('d-none'); } else { badge.classList.add('d-none'); }
 
-        if (currentSubTab === "all") renderAllMatch(filUp);
-        else if (currentSubTab === "available") renderAvailableMatch(filUp);
-        else if (currentSubTab === "reserved") renderReservedMatch(filUp);
+        if (currentSubTab === "all") renderAllMatch(filUp); else if (currentSubTab === "available") renderAvailableMatch(filUp); else if (currentSubTab === "reserved") renderReservedMatch(filUp);
 
-        // ================== FILTER HISTORY ==================
+        // TANGKAP FILTER HISTORY
         const sH = document.getElementById('filter-search-hist').value.toLowerCase();
+        const tipeFH = document.getElementById('filter-tipe-hist').value;
         const startDH = document.getElementById('filter-start-date-hist').value;
         const endDH = document.getElementById('filter-end-date-hist').value;
         const startTH = document.getElementById('filter-start-time-hist').value;
         const endTH = document.getElementById('filter-end-time-hist').value;
         const picFH = document.getElementById('filter-pic-hist').value;
-
+        
         let filPast = pastData;
         if(sH) filPast = filPast.filter(i => i.match.toLowerCase().includes(sH) || i.liga.toLowerCase().includes(sH));
+        // Logika Filter Tipe Live History
+        if (tipeFH === 'host') filPast = filPast.filter(i => i.host);
+        if (tipeFH === 'setup') filPast = filPast.filter(i => i.tanpaHost);
+        
         if (startDH || endDH) filPast = filPast.filter(i => { const d = i.waktu.split(' ')[0]; return (!startDH || d >= startDH) && (!endDH || d <= endDH); });
-        if (startTH || endTH) filPast = filPast.filter(i => { 
-            let j = i.waktu.split(' ')[1]; if(j.length < 5) j = "0" + j; 
-            return (!startTH || j >= startTH) && (!endTH || j <= endTH); 
-        });
+        if (startTH || endTH) filPast = filPast.filter(i => { let j = i.waktu.split(' ')[1]; if(j.length < 5) j = "0" + j; return (!startTH || j >= startTH) && (!endTH || j <= endTH); });
         if (picFH) filPast = filPast.filter(i => i.streamer.includes(picFH));
 
-        filPast.sort((a, b) => {
-            let pA = a.waktu.split(" "), tA = pA[0].split("-"), jA = pA[1].split(":");
-            let pB = b.waktu.split(" "), tB = pB[0].split("-"), jB = pB[1].split(":");
-            return new Date(tB[0], tB[1]-1, tB[2], jB[0], jB[1]) - new Date(tA[0], tA[1]-1, tA[2], jA[0], jA[1]);
-        });
+        filPast.sort((a, b) => { let pA = a.waktu.split(" "), tA = pA[0].split("-"), jA = pA[1].split(":"); let pB = b.waktu.split(" "), tB = pB[0].split("-"), jB = pB[1].split(":"); return new Date(tB[0], tB[1]-1, tB[2], jB[0], jB[1]) - new Date(tA[0], tA[1]-1, tA[2], jA[0], jA[1]); });
         renderHistoryMatch(filPast);
     }
 
     function resetFilters(type) {
-        if(type === 'schedule') {
-            document.querySelectorAll('#page-schedule input, #page-schedule select').forEach(i => i.value = '');
-        } else {
-            document.querySelectorAll('#page-history input, #page-history select').forEach(i => i.value = '');
-        }
+        if(type === 'schedule') { document.querySelectorAll('#page-schedule input, #page-schedule select').forEach(i => i.value = ''); } 
+        else { document.querySelectorAll('#page-history input, #page-history select').forEach(i => i.value = ''); }
         applyFilters();
     }
     document.querySelectorAll('#page-schedule input, #page-schedule select, #page-history input, #page-history select').forEach(i => i.addEventListener('input', applyFilters));
 
-    // --- RENDER TABEL ---
     const isAdmin = () => activeUser.role === 'Admin';
 
     function renderAllMatch(data) {
@@ -436,24 +512,14 @@
 
         tbody.innerHTML = data.map(m => {
             let statusBadge = `<span class="badge bg-secondary">⚪ Belum Diatur</span>`;
-            if (m.host) statusBadge = `<span class="badge bg-success">🟢 Live Host</span>`;
-            if (m.tanpaHost) statusBadge = `<span class="badge bg-warning text-dark">🟡 Tanpa Host</span>`;
+            if (m.host) statusBadge = `<span class="badge bg-success">🟢 Live Host</span>`; if (m.tanpaHost) statusBadge = `<span class="badge bg-warning text-dark">🟡 Tanpa Host</span>`;
             
             let actionBtn = "";
             if (isAdmin()) {
-                if (m.host || m.tanpaHost) {
-                    actionBtn = `<button class="btn btn-sm btn-danger px-3" onclick="triggerAction(${m.rowId}, 'remove')"><i class="fas fa-trash-alt"></i> Remove</button>`;
-                } else {
-                    actionBtn = `<button class="btn btn-sm btn-outline-success me-1" onclick="triggerAction(${m.rowId}, 'add-host')">+ Host</button>
-                                 <button class="btn btn-sm btn-outline-warning text-dark" onclick="triggerAction(${m.rowId}, 'add-nohost')">+ Setup</button>`;
-                }
+                if (m.host || m.tanpaHost) { actionBtn = `<button class="btn btn-sm btn-danger px-3" onclick="triggerAction(${m.rowId}, 'remove')"><i class="fas fa-trash-alt"></i> Remove</button>`; } 
+                else { actionBtn = `<button class="btn btn-sm btn-outline-success me-1" onclick="triggerAction(${m.rowId}, 'add-host')">+ Host</button><button class="btn btn-sm btn-outline-warning text-dark" onclick="triggerAction(${m.rowId}, 'add-nohost')">+ Setup</button>`; }
             }
-            
-            return `<tr>
-                <td><small>${formatHariTgl(m.waktu)}</small></td><td><span class="badge bg-light text-dark">${m.liga}</span></td>
-                <td class="fw-bold">${m.match}</td><td>${statusBadge}</td>
-                ${isAdmin() ? `<td class="text-center">${actionBtn}</td>` : ''}
-            </tr>`;
+            return `<tr><td><small>${formatHariTgl(m.waktu)}</small></td><td><span class="badge bg-light text-dark">${m.liga}</span></td><td class="fw-bold">${m.match}</td><td>${statusBadge}</td>${isAdmin() ? `<td class="text-center">${actionBtn}</td>` : ''}</tr>`;
         }).join('');
     }
 
@@ -463,19 +529,13 @@
         const tbody = document.getElementById('available-body');
         if(availData.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted">Tidak ada jadwal available.</td></tr>`; return; }
 
-        let optionsHtml = `<option value="" selected disabled>-- Pilih PIC --</option>`;
-        listStreamer.forEach(n => optionsHtml += `<option value="${n}">${n}</option>`);
+        let optionsHtml = `<option value="" selected disabled>-- Pilih PIC --</option>`; listStreamer.forEach(n => optionsHtml += `<option value="${n}">${n}</option>`);
 
         tbody.innerHTML = availData.map(m => {
             let tipe = m.host ? `<span class="badge bg-success">🟢 With Host</span>` : `<span class="badge bg-warning text-dark">🟡 Tanpa Host</span>`;
             let inputUI = isAdmin() ? `<select class="form-select form-select-sm fw-bold border-primary text-primary" onchange="addPIC(${m.rowId}, this.value)">${optionsHtml}</select>` : '';
             let btnUI = isAdmin() ? `<td class="text-center"><button class="btn btn-sm btn-danger" onclick="triggerAction(${m.rowId}, 'remove')"><i class="fas fa-times"></i></button></td>` : '';
-            
-            return `<tr>
-                <td><small>${formatHariTgl(m.waktu)}</small></td><td><span class="badge bg-light text-dark">${m.liga}</span></td>
-                <td class="fw-bold">${m.match}</td><td>${tipe}</td>
-                ${isAdmin() ? `<td>${inputUI}</td>${btnUI}` : ''}
-            </tr>`;
+            return `<tr><td><small>${formatHariTgl(m.waktu)}</small></td><td><span class="badge bg-light text-dark">${m.liga}</span></td><td class="fw-bold">${m.match}</td><td>${tipe}</td>${isAdmin() ? `<td>${inputUI}</td>${btnUI}` : ''}</tr>`;
         }).join('');
     }
 
@@ -488,26 +548,12 @@
         tbody.innerHTML = reservedData.map(m => {
             let tipe = m.host ? `<span class="badge bg-success">🟢 With Host</span>` : `<span class="badge bg-warning text-dark">🟡 Tanpa Host</span>`;
             let currentPICs = m.streamer.split(',').map(x => x.trim()).filter(x => x !== "");
-            
-            let picBadges = currentPICs.map(name => `
-                <span class="badge bg-primary fs-6 mb-1 me-1">
-                    <i class="fas fa-user me-1"></i>${name} 
-                    ${isAdmin() ? `<i class="fas fa-times ms-1" style="cursor:pointer; color:#ffb3b3;" onclick="removePIC(${m.rowId}, '${name}')"></i>` : ''}
-                </span>
-            `).join('');
+            let picBadges = currentPICs.map(name => `<span class="badge bg-primary fs-6 mb-1 me-1"><i class="fas fa-user me-1"></i>${name} ${isAdmin() ? `<i class="fas fa-times ms-1" style="cursor:pointer; color:#ffb3b3;" onclick="removePIC(${m.rowId}, '${name}')"></i>` : ''}</span>`).join('');
 
-            let addMoreOptions = `<option value="" selected disabled>+ Tambah PIC lain</option>`;
-            listStreamer.forEach(n => { if (!currentPICs.includes(n)) addMoreOptions += `<option value="${n}">${n}</option>`; });
-
+            let addMoreOptions = `<option value="" selected disabled>+ Tambah PIC lain</option>`; listStreamer.forEach(n => { if (!currentPICs.includes(n)) addMoreOptions += `<option value="${n}">${n}</option>`; });
             let inputUI = isAdmin() ? `<select class="form-select form-select-sm mt-1 border-secondary text-secondary" style="max-width: 180px;" onchange="addPIC(${m.rowId}, this.value)">${addMoreOptions}</select>` : '';
             let btnUI = isAdmin() ? `<td class="text-center"><button class="btn btn-sm btn-danger mt-1" onclick="triggerAction(${m.rowId}, 'remove')"><i class="fas fa-trash-alt"></i></button></td>` : '';
-
-            return `<tr style="background-color: #f8f9fa;">
-                <td><small>${formatHariTgl(m.waktu)}</small></td><td><span class="badge bg-light text-dark">${m.liga}</span></td>
-                <td class="fw-bold text-secondary">${m.match}</td><td>${tipe}</td>
-                <td><div class="d-flex flex-wrap align-items-center">${picBadges}</div>${inputUI}</td>
-                ${btnUI}
-            </tr>`;
+            return `<tr style="background-color: #f8f9fa;"><td><small>${formatHariTgl(m.waktu)}</small></td><td><span class="badge bg-light text-dark">${m.liga}</span></td><td class="fw-bold text-secondary">${m.match}</td><td>${tipe}</td><td><div class="d-flex flex-wrap align-items-center">${picBadges}</div>${inputUI}</td>${btnUI}</tr>`;
         }).join('');
     }
 
@@ -527,14 +573,98 @@
                 let currentPICs = m.streamer.split(',').map(x => x.trim()).filter(x => x !== "");
                 picInfo = currentPICs.map(name => `<span class="fw-bold text-primary me-2"><i class="fas fa-user me-1"></i>${name}</span>`).join('<br>');
             }
-            return `<tr>
-                <td><small>${formatHariTgl(m.waktu)}</small></td><td><span class="badge bg-light text-dark">${m.liga}</span></td>
-                <td class="fw-bold text-secondary">${m.match}</td><td>${status}</td><td>${picInfo}</td>
-            </tr>`;
+            return `<tr><td><small>${formatHariTgl(m.waktu)}</small></td><td><span class="badge bg-light text-dark">${m.liga}</span></td><td class="fw-bold text-secondary">${m.match}</td><td>${status}</td><td>${picInfo}</td></tr>`;
         }).join('');
     }
 
-    // --- ENGINE ACTION (HANYA BISA DIKLIK ADMIN) ---
+    // ==========================================
+    // EKSEKUSI AKSI MASSAL 
+    // ==========================================
+    
+    async function executeBulkSetup() {
+        if(!isAdmin()) return;
+        
+        let isAllTime = document.getElementById('b1-all-time').checked;
+        let tgl = document.getElementById('b1-date').value;
+        let start = document.getElementById('b1-start').value;
+        let end = document.getElementById('b1-end').value;
+
+        if(!isAllTime && (!tgl || !start || !end)) return alert("Pilih tanggal dan rentang jamnya dulu, atau centang 'Terapkan ke Semua' bang!");
+
+        let targets = localData.filter(m => {
+            if (m.host || m.tanpaHost || !isUpcoming(m.waktu)) return false; 
+            if (isAllTime) return true; 
+
+            let mDate = m.waktu.split(' ')[0]; let mTime = m.waktu.split(' ')[1]; if (mTime.length < 5) mTime = "0" + mTime; 
+            return (mDate === tgl && mTime >= start && mTime <= end);
+        });
+
+        if(targets.length === 0) return alert("Nggak ada jadwal 'Belum Diatur' yang sesuai filter.");
+        if(!confirm(`Menemukan ${targets.length} jadwal yang sesuai.\nUbah ke Setup sekarang?`)) return;
+
+        document.querySelector('#modalBulkSetup .btn-close').click();
+        let loader = document.getElementById('global-loader-jadwal'); loader.style.display = 'inline';
+
+        for(let i=0; i<targets.length; i++) {
+            loader.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Bulk Setup: ${i+1}/${targets.length}...`;
+            let m = targets[i]; m.host = false; m.tanpaHost = true; m.streamer = "";
+            await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({type: "jadwal", rowId: m.rowId, field: "tanpaHost", value: true}) });
+        }
+        
+        loader.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses...`; loader.style.display = 'none';
+        
+        // Auto reset checkbox & form
+        document.getElementById('b1-all-time').checked = false; document.getElementById('b1-time-inputs').style.display = 'block';
+        document.querySelectorAll('#page-schedule input, #page-schedule select').forEach(i => i.value = '');
+        applyFilters();
+        
+        alert(`Mantap bang! ${targets.length} match otomatis dipindah ke tab Available.\n\n(Filter jadwal udah di-reset otomatis)`);
+    }
+
+    async function executeBulkAssign() {
+        if(!isAdmin()) return;
+        
+        let pic = document.getElementById('b2-pic').value;
+        let isAllTime = document.getElementById('b2-all-time').checked;
+        let tgl = document.getElementById('b2-date').value;
+        let start = document.getElementById('b2-start').value;
+        let end = document.getElementById('b2-end').value;
+
+        if(!pic) return alert("Pilih nama PIC-nya dong!");
+        if(!isAllTime && (!tgl || !start || !end)) return alert("Pilih tanggal dan jamnya dulu, atau centang 'Terapkan ke Semua' bang!");
+
+        let targets = localData.filter(m => {
+            if (!m.tanpaHost || (m.streamer && m.streamer.trim() !== "") || !isUpcoming(m.waktu)) return false; 
+            if (isAllTime) return true; 
+
+            let mDate = m.waktu.split(' ')[0]; let mTime = m.waktu.split(' ')[1]; if (mTime.length < 5) mTime = "0" + mTime; 
+            return (mDate === tgl && mTime >= start && mTime <= end);
+        });
+
+        if(targets.length === 0) return alert("Nggak ada jadwal 'Tanpa Host' kosong yang sesuai filter.");
+        if(!confirm(`Menemukan ${targets.length} jadwal Setup yang kosong.\nIsi dengan nama ${pic} sekarang?`)) return;
+
+        document.querySelector('#modalBulkAssign .btn-close').click();
+        let loader = document.getElementById('global-loader-jadwal'); loader.style.display = 'inline';
+
+        for(let i=0; i<targets.length; i++) {
+            loader.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Assign PIC: ${i+1}/${targets.length}...`;
+            let m = targets[i]; m.streamer = pic; 
+            await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({type: "jadwal", rowId: m.rowId, field: "streamer", value: pic}) });
+        }
+
+        loader.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Memproses...`; loader.style.display = 'none';
+        
+        // Auto reset checkbox & form
+        document.getElementById('b2-pic').value = ""; 
+        document.getElementById('b2-all-time').checked = false; document.getElementById('b2-time-inputs').style.display = 'block';
+        document.querySelectorAll('#page-schedule input, #page-schedule select').forEach(i => i.value = '');
+        
+        applyFilters(); updateDetailedInfo();
+        
+        alert(`Beres bang! ${targets.length} match udah ditugaskan ke ${pic} di tab Reserved.\n\n(Filter jadwal udah di-reset otomatis)`);
+    }
+
     async function triggerAction(rowId, action) {
         if(!isAdmin()) return;
         const idx = localData.findIndex(i => i.rowId === rowId); if(idx === -1) return;
@@ -565,21 +695,13 @@
         finally { document.getElementById('global-loader-jadwal').style.display = 'none'; }
     }
 
-    // --- MANAJEMEN USER (ADMIN ONLY) ---
     function renderUserList() {
         const tbody = document.getElementById('user-list-body');
-        tbody.innerHTML = listUsers.map(u => `
-            <tr>
-                <td class="fw-bold">${u.username}</td><td><span class="text-muted">******</span></td>
-                <td><span class="badge bg-${u.role==='Admin'?'danger':'primary'}">${u.role}</span></td>
-                <td>${u.username !== 'admin' ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.rowId}, '${u.username}')"><i class="fas fa-trash"></i></button>` : '-'}</td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = listUsers.map(u => `<tr><td class="fw-bold">${u.username}</td><td><span class="text-muted">******</span></td><td><span class="badge bg-${u.role==='Admin'?'danger':'primary'}">${u.role}</span></td><td>${u.username !== 'admin' ? `<button class="btn btn-sm btn-outline-danger" onclick="deleteUser(${u.rowId}, '${u.username}')"><i class="fas fa-trash"></i></button>` : '-'}</td></tr>`).join('');
     }
     async function addUser() {
         const u = document.getElementById('new-user-name').value.trim(); const p = document.getElementById('new-user-pass').value.trim(); const r = document.getElementById('new-user-role').value;
-        if(u==="" || p==="") return alert("Isi username & password!");
-        if(listUsers.find(x=>x.username===u)) return alert("Username sudah ada!");
+        if(u==="" || p==="") return alert("Isi username & password!"); if(listUsers.find(x=>x.username===u)) return alert("Username sudah ada!");
         
         document.getElementById('global-loader-user').style.display = 'inline';
         listUsers.push({rowId: 9999, username: u, password: p, role: r}); renderUserList();
@@ -593,51 +715,35 @@
         finally { document.getElementById('global-loader-user').style.display = 'none'; }
     }
 
-    // --- MANAJEMEN STREAMER (ADMIN ONLY) ---
     function renderStreamerList() {
         const tbody = document.getElementById('streamer-list-body');
         if(listStreamer.length === 0) { tbody.innerHTML = `<tr><td colspan="2" class="text-muted">Belum ada data</td></tr>`; return; }
         tbody.innerHTML = listStreamer.map((nama, index) => `<tr><td class="fw-bold text-muted">${index + 1}</td><td class="text-start fw-bold">${nama}</td></tr>`).join('');
     }
-
     async function addStreamer() {
-        const input = document.getElementById('new-streamer-input');
-        const namaBaru = input.value.trim();
-        if(namaBaru === "") return;
-        const namaRapi = namaBaru.charAt(0).toUpperCase() + namaBaru.slice(1).toLowerCase();
-        if(listStreamer.includes(namaRapi)) { alert("Nama sudah terdaftar!"); return; }
+        const input = document.getElementById('new-streamer-input'); const namaBaru = input.value.trim(); if(namaBaru === "") return;
+        const namaRapi = namaBaru.charAt(0).toUpperCase() + namaBaru.slice(1).toLowerCase(); if(listStreamer.includes(namaRapi)) { alert("Nama sudah terdaftar!"); return; }
 
         document.getElementById('global-loader-streamer').style.display = 'inline';
-        listStreamer.push(namaRapi); input.value = "";
-        renderStreamerList(); applyFilters(); updateDetailedInfo();
-        try {
-            await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({type: "streamer_add", nama: namaRapi}) });
-        } finally { document.getElementById('global-loader-streamer').style.display = 'none'; }
+        listStreamer.push(namaRapi); input.value = ""; renderStreamerList(); applyFilters(); updateDetailedInfo();
+        try { await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({type: "streamer_add", nama: namaRapi}) }); } 
+        finally { document.getElementById('global-loader-streamer').style.display = 'none'; }
     }
 
-    // --- REKAPAN DETAILED INFO (ADMIN ONLY) ---
     function updateDetailedInfo() {
-        let sysHostTotal = localData.filter(d => d.host).length;
-        let sysTanpaHostTotal = localData.filter(d => d.tanpaHost).length;
-        let sysTotalMatch = localData.length;
+        let sysHostTotal = localData.filter(d => d.host).length; let sysTanpaHostTotal = localData.filter(d => d.tanpaHost).length; let sysTotalMatch = localData.length;
+        let totalManualHost = 0; let totalManualTanpaHost = 0; Object.values(rekapanData).forEach(val => { totalManualHost += val.host; totalManualTanpaHost += val.tanpaHost; });
 
-        let totalManualHost = 0; let totalManualTanpaHost = 0;
-        Object.values(rekapanData).forEach(val => { totalManualHost += val.host; totalManualTanpaHost += val.tanpaHost; });
-
-        document.getElementById('stat-total').innerText = sysTotalMatch + totalManualHost + totalManualTanpaHost;
-        document.getElementById('stat-with-host').innerText = sysHostTotal + totalManualHost;
-        document.getElementById('stat-no-host').innerText = sysTanpaHostTotal + totalManualTanpaHost;
+        document.getElementById('stat-total').innerText = sysTotalMatch + totalManualHost + totalManualTanpaHost; document.getElementById('stat-with-host').innerText = sysHostTotal + totalManualHost; document.getElementById('stat-no-host').innerText = sysTanpaHostTotal + totalManualTanpaHost;
 
         let hitunganSistem = {};
-        
         localData.forEach(d => {
             if (d.streamer && d.streamer.trim() !== "") {
                 let names = d.streamer.split(',').map(x => x.trim()).filter(x => x !== "");
                 names.forEach(n => {
                     let nama = n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
                     if (!hitunganSistem[nama]) { hitunganSistem[nama] = { host: 0, tanpaHost: 0 }; }
-                    if (d.host) hitunganSistem[nama].host++;
-                    if (d.tanpaHost) hitunganSistem[nama].tanpaHost++;
+                    if (d.host) hitunganSistem[nama].host++; if (d.tanpaHost) hitunganSistem[nama].tanpaHost++;
                 });
             }
         });
@@ -645,35 +751,21 @@
         let semuaNama = new Set([...listStreamer, ...Object.keys(hitunganSistem), ...Object.keys(rekapanData)]);
         let htmlRekapan = "";
         semuaNama.forEach(nama => {
-            let sysHost = hitunganSistem[nama] ? hitunganSistem[nama].host : 0;
-            let sysTanpaHost = hitunganSistem[nama] ? hitunganSistem[nama].tanpaHost : 0;
-            let manHost = rekapanData[nama] ? rekapanData[nama].host : 0;
-            let manTanpaHost = rekapanData[nama] ? rekapanData[nama].tanpaHost : 0;
+            let sysHost = hitunganSistem[nama] ? hitunganSistem[nama].host : 0, sysTanpaHost = hitunganSistem[nama] ? hitunganSistem[nama].tanpaHost : 0, manHost = rekapanData[nama] ? rekapanData[nama].host : 0, manTanpaHost = rekapanData[nama] ? rekapanData[nama].tanpaHost : 0;
             let grandTotal = sysHost + sysTanpaHost + manHost + manTanpaHost;
-
-            htmlRekapan += `<tr>
-                <td class="text-start fw-bold">${nama}</td><td class="text-success fw-bold">${sysHost}</td><td class="text-warning text-dark fw-bold">${sysTanpaHost}</td>
-                <td><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" value="${manHost}" onchange="updateDatabaseRekapan('${nama}', 'host', this.value)"></td>
-                <td><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" value="${manTanpaHost}" onchange="updateDatabaseRekapan('${nama}', 'tanpaHost', this.value)"></td>
-                <td class="fw-bold fs-5 bg-light ${grandTotal > 0 ? 'text-primary' : 'text-muted'}">${grandTotal}</td>
-            </tr>`;
+            htmlRekapan += `<tr><td class="text-start fw-bold">${nama}</td><td class="text-success fw-bold">${sysHost}</td><td class="text-warning text-dark fw-bold">${sysTanpaHost}</td><td><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" value="${manHost}" onchange="updateDatabaseRekapan('${nama}', 'host', this.value)"></td><td><input type="number" class="form-control form-control-sm mx-auto text-center" style="width: 70px;" value="${manTanpaHost}" onchange="updateDatabaseRekapan('${nama}', 'tanpaHost', this.value)"></td><td class="fw-bold fs-5 bg-light ${grandTotal > 0 ? 'text-primary' : 'text-muted'}">${grandTotal}</td></tr>`;
         });
         document.getElementById('recap-body').innerHTML = htmlRekapan;
     }
-
     async function updateDatabaseRekapan(nama, tipe, nilai) {
-        document.getElementById('global-loader-rekapan').style.display = 'inline';
-        let numVal = parseInt(nilai) || 0;
-        if (!rekapanData[nama]) rekapanData[nama] = { host: 0, tanpaHost: 0 };
-        rekapanData[nama][tipe] = numVal;
-        try { await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({type: "rekapan", nama, field: tipe, value: numVal}) });
-        } finally { document.getElementById('global-loader-rekapan').style.display = 'none'; }
+        document.getElementById('global-loader-rekapan').style.display = 'inline'; let numVal = parseInt(nilai) || 0;
+        if (!rekapanData[nama]) rekapanData[nama] = { host: 0, tanpaHost: 0 }; rekapanData[nama][tipe] = numVal;
+        try { await fetch(sheetAPI, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({type: "rekapan", nama, field: tipe, value: numVal}) }); } 
+        finally { document.getElementById('global-loader-rekapan').style.display = 'none'; }
         updateDetailedInfo();
     }
 
-    // START APP
-    const script = document.createElement('script'); script.src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"; document.head.appendChild(script);
-    initApp();
+    const script = document.createElement('script'); script.src = "https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"; document.head.appendChild(script); initApp();
 </script>
 </body>
 </html>
